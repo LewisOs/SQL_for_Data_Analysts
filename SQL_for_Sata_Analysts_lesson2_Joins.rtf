@@ -2,7 +2,7 @@
 \cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;}
 {\*\expandedcolortbl;;}
-\paperw11900\paperh16840\margl1440\margr1440\vieww6660\viewh14840\viewkind0
+\paperw11900\paperh16840\margl1440\margr1440\vieww11680\viewh27940\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 
 \f0\fs24 \cf0 SELECT *\
@@ -73,4 +73,130 @@ JOIN accounts ON orders.account_id = accounts.id\
 WHERE orders.occurred_at BETWEEN '01-01-2015' AND '01-01-2016';\
 ____\
 \
+SELECT SUM(poster_qty)\
+FROM orders;\
+____\
+\
+SELECT SUM(standard_qty)\
+FROM orders;\
+____\
+\
+SELECT SUM(total_amt_usd)\
+FROM orders;\
+____\
+\
+SELECT id, standard_amt_usd + gloss_amt_usd AS standard_gloss_amt_usd\
+FROM orders;\
+____\
+\
+SELECT SUM(standard_amt_usd) / SUM(standard_qty) AS amt_usd_per_standard_unit\
+FROM orders;\
+____\
+\
+SELECT MIN(occurred_at)\
+FROM orders; \
+____\
+\
+SELECT occurred_at\
+FROM orders\
+ORDER BY occurred_at ASC\
+LIMIT 1; \
+____\
+\
+SELECT MAX(occurred_at)\
+FROM web_events;\
+___\
+\
+SELECT occurred_at\
+FROM web_events\
+ORDER BY occurred_at DESC\
+LIMIT 1; \
+____\
+\
+SELECT AVG(standard_amt_usd) AS standard_amt_mean, AVG(gloss_amt_usd) AS gloss_amt_mean, AVG(poster_amt_usd) AS poster_amt_mean, AVG(standard_qty) AS standard_qty_mean, AVG(gloss_qty) AS gloss_qty_mean, AVG(poster_qty) AS poster_qty_mean\
+FROM orders;\
+____\
+\
+SELECT * \
+FROM (SELECT total_amt_usd\
+	FROM orders\
+	ORDER BY total_amt_usd\
+	LIMIT 3457) AS Table1\
+ORDER BY total_amt_usd DESC\
+LIMIT 2;\
+____\
+\
+SELECT accounts.name AS account_name, orders.occurred_at AS date\
+FROM orders\
+JOIN accounts ON orders.account_id = accounts.id\
+ORDER BY date ASC\
+LIMIT 1;\
+____\
+\
+SELECT accounts.name AS account_name, SUM(orders.total_amt_usd) as total_sales\
+FROM orders\
+JOIN accounts ON orders.account_id = accounts.id\
+GROUP BY account_name;\
+____\
+\
+SELECT orders.occurred_at AS date, web_events.channel AS channel, accounts.name AS account_name\
+FROM orders\
+JOIN accounts ON orders.account_id = accounts.id\
+JOIN web_events ON accounts.id = web_events.account_id\
+ORDER BY date DESC\
+LIMIT 1;\
+____\
+\
+SELECT web_events.channel as channel, COUNT(web_events.channel) AS uses\
+FROM web_events\
+GROUP BY channel;\
+____\
+\
+SELECT accounts.primary_poc AS primary_contact\
+FROM accounts\
+JOIN web_events ON accounts.id = web_events.account_id\
+ORDER BY web_events.occurred_at DESC\
+LIMIT 1;\
+____\
+\
+SELECT MIN(orders.total_amt_usd) AS smallest_order_amt, accounts.name AS name\
+FROM orders\
+JOIN accounts ON orders.account_id = accounts.id\
+GROUP BY name;\
+____\
+\
+SELECT COUNT(sales_reps.id) AS num_reps, region.name AS region_name\
+FROM sales_reps\
+JOIN region ON sales_reps.region_id = region.id\
+GROUP BY region_name\
+ORDER BY num_reps ASC;\
+____\
+\
+SELECT accounts.name AS name, AVG(orders.standard_qty) AS standard_avg_qty, AVG(orders.gloss_qty) AS gloss_avg_qty, AVG(orders.poster_qty) AS poster_avg_qty\
+FROM orders\
+JOIN accounts ON orders.account_id = accounts.id\
+GROUP BY name\
+____\
+\
+SELECT accounts.name AS name, AVG(orders.standard_amt_usd) AS standard_amt_avg, AVG(orders.gloss_amt_usd) AS gloss_amt_avg, AVG(orders.poster_amt_usd) AS poster_amt_avg\
+FROM orders\
+JOIN accounts ON orders.account_id = accounts.id\
+GROUP BY name\
+____\
+\
+SELECT sales_reps.name AS rep_name, web_events.channel AS channel_type, COUNT(web_events.channel) AS n_uses\
+FROM web_events\
+JOIN accounts ON web_events.account_id = accounts.id\
+JOIN sales_reps ON accounts.sales_rep_id = sales_reps.id\
+GROUP BY rep_name, channel_type\
+ORDER BY n_uses DESC;\
+____\
+\
+SELECT region.name, web_events.channel, COUNT(*) AS num_events\
+FROM accounts\
+JOIN web_events ON accounts.id = web_events.account_id\
+JOIN sales_reps ON sales_reps.id = accounts.sales_rep_id\
+JOIN region ON sales_reps.region_id = region.id\
+GROUP BY region.name, web_events.channel\
+ORDER BY num_events DESC;\
 }
