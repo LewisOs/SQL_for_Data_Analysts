@@ -2,7 +2,7 @@
 \cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;}
 {\*\expandedcolortbl;;}
-\paperw11900\paperh16840\margl1440\margr1440\vieww10500\viewh27940\viewkind0
+\paperw11900\paperh16840\margl1440\margr1440\vieww7260\viewh27940\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 
 \f0\fs24 \cf0 SELECT *\
@@ -291,6 +291,82 @@ GROUP BY accounts.id, accounts.name, web_events.channel\
 ORDER BY COUNT(*) DESC\
 LIMIT 1;\
 ____\
+\
+SELECT SUM(total_amt_usd) AS total_sales, DATE_TRUNC('year', occurred_at) as year\
+FROM orders\
+GROUP BY year;\
+____\
+\
+SELECT DATE_PART('month', occurred_at) AS month, SUM(total_amt_usd) AS total_sales\
+FROM orders\
+GROUP BY month\
+ORDER BY month;\
+____\
+\
+SELECT DATE_PART('year', occurred_at) AS year, COUNT(*) AS num_orders\
+FROM orders\
+WHERE DATE_PART('year', occurred_at) BETWEEN 2014 AND 2017\
+GROUP BY year;\
+____\
+\
+SELECT DATE_PART('month', occurred_at) AS month, COUNT(*) AS num_orders\
+FROM orders\
+WHERE occurred_at BETWEEN '2014-01-01' AND '2017-01-01'\
+GROUP BY month\
+ORDER BY month;\
+____\
+\
+SELECT DATE_PART('year', orders.occurred_at) AS ord_year, DATE_PART('month', orders.occurred_at) AS ord_month, SUM(orders.gloss_amt_usd), accounts.name\
+FROM orders\
+JOIN accounts ON orders.account_id = accounts.id\
+WHERE accounts.name = 'Walmart'\
+GROUP BY ord_year, ord_month, accounts.name\
+ORDER BY sum DESC\
+LIMIT 1;\
+____\
+\
+SELECT account_id, total_amt_usd,\
+CASE WHEN total_amt_usd > 3000 THEN 'Large' \
+ELSE 'Small' END AS order_size\
+FROM orders;\
+____\
+\
+SELECT COUNT(*) AS num_orders,\
+CASE WHEN total_amt_usd >= 2000 THEN 'At Least 2000' \
+	WHEN total_amt_usd >= 1000 THEN 'Between 1000 and 2000'\
+ELSE 'Less than 1000' END AS order_size\
+FROM orders\
+GROUP BY order_size;\
+____\
+\
+SELECT SUM(orders.total_amt_usd) AS total_sales, accounts.name,\
+CASE WHEN SUM(orders.total_amt_usd) >= 200000 THEN 'greater than 200,000' \
+	WHEN SUM(orders.total_amt_usd) >= 100000 THEN '200,000 and 100,000'\
+ELSE 'under 100,000' END AS level\
+FROM orders\
+JOIN accounts ON orders.account_id = accounts.id\
+GROUP BY accounts.name\
+ORDER BY total_sales DESC;\
+____\
+\
+SELECT account_id, total_amt_usd,\
+CASE WHEN total_amt_usd > 3000 THEN 'Large' \
+ELSE 'Small' END AS order_size\
+FROM orders\
+WHERE DATE_PART('year', occurred_at) BETWEEN 2016 AND 2017\
+ORDER BY total_amt_usd DESC;\
+____\
+\
+SELECT sales_reps.name AS rep_name, COUNT(orders.*) AS num_orders, \
+CASE WHEN COUNT(orders.*) > 200 THEN 'top'\
+	ELSE 'not' END\
+FROM sales_reps\
+JOIN accounts ON sales_reps.id = accounts.sales_rep_id\
+JOIN orders ON accounts.id = orders.account_id\
+GROUP BY rep_name\
+ORDER BY num_orders DESC;\
+____\
+\
 \
 \
 \
