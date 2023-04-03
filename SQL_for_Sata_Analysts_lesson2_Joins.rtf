@@ -1,8 +1,8 @@
 {\rtf1\ansi\ansicpg1252\cocoartf2708
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
-{\colortbl;\red255\green255\blue255;}
-{\*\expandedcolortbl;;}
-\paperw11900\paperh16840\margl1440\margr1440\vieww5200\viewh18640\viewkind0
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fswiss\fcharset0 Helvetica-Bold;}
+{\colortbl;\red255\green255\blue255;\red11\green11\blue11;\red255\green255\blue255;}
+{\*\expandedcolortbl;;\cssrgb\c4314\c4314\c4314;\cssrgb\c100000\c100000\c100000;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww12800\viewh27940\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 
 \f0\fs24 \cf0 SELECT *\
@@ -397,7 +397,83 @@ WHERE DATE_TRUNC('month', occurred_at) =\
 	LIMIT 1)\
 ____\
 \
+SELECT temp3.rep_name, temp3.region_name, temp3.total_amt\
+FROM (\
+	SELECT region_name, MAX(total_amt) AS total_amt\
+	FROM (\
+		SELECT sales_reps.name AS rep_name, region.name AS region_name, SUM(orders.total_amt_usd) AS total_amt\
+		FROM sales_reps\
+		JOIN accounts ON sales_reps.id = accounts.sales_rep_id\
+		JOIN orders ON accounts.id = orders.account_id\
+		JOIN region ON sales_reps.region_id = region.id\
+		GROUP BY rep_name, region_name) AS temp1\
+	GROUP BY region_name) AS temp2\
+JOIN (\
+	SELECT sales_reps.name AS rep_name, region.name AS region_name, SUM(orders.total_amt_usd) AS total_amt\
+  	FROM sales_reps\
+  	JOIN accounts ON sales_reps.id = accounts.sales_rep_id\
+  	JOIN orders ON accounts.id = orders.account_id\
+	JOIN region ON sales_reps.region_id = region.id\
+  	GROUP BY rep_name, region_name) AS temp3\
+ON temp3.region_name = temp2.region_name AND temp3.total_amt = temp2.total_amt\
+____\
 \
+SELECT region.name AS region_name, COUNT(orders.*)\
+FROM region\
+JOIN sales_reps ON region.id = sales_reps.region_id\
+JOIN accounts ON sales_reps.id = accounts.sales_rep_id\
+JOIN orders ON accounts.id = orders.account_id\
+WHERE region.name = (\
+	SELECT region.name AS region_name\
+	FROM region\
+	JOIN sales_reps ON region.id = sales_reps.region_id\
+	JOIN accounts ON sales_reps.id = accounts.sales_rep_id\
+	JOIN orders ON accounts.id = orders.account_id\
+	GROUP BY region_name\
+	ORDER BY SUM(orders.total_amt_usd) DESC\
+	LIMIT 1)\
+GROUP BY region.name\
+____\
+\
+SELECT COUNT(*)\
+FROM (\
+  SELECT accounts.name\
+  FROM accounts\
+  JOIN orders ON accounts.id = orders.account_id\
+  GROUP BY accounts.name\
+  HAVING SUM(orders.total) > (\
+    SELECT total\
+  	FROM (\
+      SELECT accounts.name, SUM(orders.total) AS total\
+      FROM accounts\
+      JOIN orders ON accounts.id = orders.account_id\
+      GROUP BY accounts.name\
+      ORDER BY SUM(orders.standard_qty) DESC\
+      LIMIT 1) AS most_standard)\
+  	) AS counter_tab;\
+____\
+\
+SELECT channel, COUNT(*), accounts.name\
+FROM web_events\
+JOIN accounts ON web_events.account_id = accounts.id\
+WHERE accounts.name =\
+    (SELECT accounts.name\
+    FROM accounts\
+    JOIN orders ON accounts.id = orders.account_id\
+    GROUP BY accounts.name\
+    ORDER BY sum(orders.total_amt_usd) DESC\
+    LIMIT 1)\
+GROUP BY channel, accounts.name\
+____\
+\
+Next is Q5 - 
+\fs32 \cf2 \cb3 \expnd0\expndtw0\kerning0
+What is the lifetime average amount spent in terms of 
+\f1\b total_amt_usd
+\f0\b0  for the top 10 total spending 
+\f1\b accounts
+\f0\b0 ?
+\fs24 \cf0 \cb1 \kerning1\expnd0\expndtw0 \
 \
 \
 \
